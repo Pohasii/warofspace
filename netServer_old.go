@@ -8,12 +8,12 @@ package main
 //	"time"
 //)
 //
-//type message struct {
+//type InputMessage struct {
 //	addr *net.UDPAddr
 //	text      []byte
 //}
 //
-//type Messages chan message
+//type Messages chan InputMessage
 //
 //type ValidUser map[string]time.Time // *net.UDPAddr
 //
@@ -24,7 +24,7 @@ package main
 //	maxMessageSize int
 //	timeOutConnections time.Duration
 //	serverAddress *net.UDPAddr
-//	connections map[string]time.Time
+//	clients map[string]time.Time
 //	socket *net.UDPConn
 //}
 //
@@ -43,7 +43,7 @@ package main
 //		}
 //
 //		if validation(verifyUser, caddr, &sms, &size); size > 0 {
-//			MessagesFromUser <- message{caddr, sms[:size]}
+//			MessagesFromUser <- InputMessage{caddr, sms[:size]}
 //			// fmt.Println("caddr: ", caddr, "size: ", size, "mess: ", string(sms[:size]))
 //		}
 //	}
@@ -54,10 +54,10 @@ package main
 //	// check user in verified Users or validation secret
 //	if _, ok := verifyUser[addr.String()]; ok || secret == string((*envelope)[:6]) {
 //
-//		// update time last message
+//		// update time last InputMessage
 //		verifyUser[addr.String()] = time.Now()
 //
-//		// del secrets byte from message
+//		// del secrets byte from InputMessage
 //		*envelope = (*envelope)[6:]
 //		if string(*envelope) == "ping" {
 //			*size = 0
@@ -82,7 +82,7 @@ package main
 //	// slice for offline users
 //	offlineUsers := make([]string, 0, 300)
 //
-//	// timeout for connections // 30sec
+//	// timeout for clients // 30sec
 //	timeOut := 30000 * time.Millisecond
 //
 //	for mess := range MessagesFromUser {
@@ -96,7 +96,7 @@ package main
 //				if err != nil {
 //					log.Println(err)
 //				}
-//				MessagesToUser <- message{addr, mess.text}
+//				MessagesToUser <- InputMessage{addr, mess.text}
 //			}
 //
 //			if elapsed > timeOut {

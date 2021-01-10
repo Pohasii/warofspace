@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -13,6 +14,13 @@ var Users = make(ValidUser, 0)
 var MessagesFromUsers = make(Messages, 5000)
 var MessagesToUsers = make(Messages, 5000)
 
+var parameters ServerParameters = ServerParameters {
+	"",
+	"udp",
+	30,
+	1456,
+}
+
 func main() {
 	fmt.Println("this is space bro")
 
@@ -22,7 +30,12 @@ func main() {
 	SolarSystem.addObject(CreateObject(theID.Get(), "Sun", 0, 0.1, SolarSystem.Size.X/2, SolarSystem.Size.Y/2))
 	SolarSystem.addPlayer(CreatePlayer(theID.Get(),"Sonic",0,0, 1.5))
 
-	go netStart()
+	network, err := startConnection(parameters)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	go network.readConnection()
 
 	var wg = sync.WaitGroup{}
 
@@ -54,8 +67,8 @@ func main() {
 		var addr *net.UDPAddr
 		objects, players := SolarSystem.getFrameOfTheWorld()
 		// fmt.Println("objects: ",objects, ", players: ",players)
-		MessagesFromUsers <- message{addr, []byte("game" + "object" + string(objects) + "\n")}
-		MessagesFromUsers <- message{addr, []byte("game" + "player" + string(players) + "\n")}
+		MessagesFromUsers <- InputMessage{addr, []byte("game" + "object" + string(objects) + "\n")}
+		MessagesFromUsers <- InputMessage{addr, []byte("game" + "player" + string(players) + "\n")}
 	}
 
 }
