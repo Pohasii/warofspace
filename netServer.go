@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -14,21 +15,32 @@ type message struct {
 
 type Messages chan message
 
-type ValidUser map[string]time.Time // *net.UDPAddr
+type connection map[int]client
+// var secret string = "qwerty"
+type client struct {
+	ID int
+	lastActivity time.Time
+	addr string
+}
 
-var secret string = "qwerty"
-
-type network struct {
+type Network struct {
+	nextID _ID
 	secret string
 	maxMessageSize int
 	timeOutConnections time.Duration
 	serverAddress *net.UDPAddr
-	connections map[string]time.Time
+	connections connection
 	socket *net.UDPConn
 	status bool
 }
 
-func (the *network) reader(MessagesFromUser Messages) {
+func (the *Network) init () *Network{
+	return &Network{
+		connections: make(connection, 0),
+	}
+}
+
+func (the *Network) reader(MessagesFromUser Messages) {
 	defer the.socket.Close()
 
 	var sms = make([]byte, the.maxMessageSize)
@@ -46,10 +58,10 @@ func (the *network) reader(MessagesFromUser Messages) {
 	}
 }
 
-func (the *network) validation(userAddr *net.UDPAddr, letter *[]byte, size *int) {
+func (the *Network) validation(userAddr *net.UDPAddr, letter *[]byte, size *int) {
 
 	// check user in verified Users or validation secret
-	if _, ok := the.connections[userAddr.String()]; ok || secret == string((*letter)[:6]) {
+	if _, ok := the.connections[userAddr.String()]; ok || the.secret == string((*letter)[:6]) {
 
 		// update time last message
 		the.connections[userAddr.String()] = time.Now()
@@ -65,7 +77,7 @@ func (the *network) validation(userAddr *net.UDPAddr, letter *[]byte, size *int)
 }
 
 //
-func (the *network) sender(MessagesToUser Messages) {
+func (the *Network) sender(MessagesToUser Messages) {
 	for letter := range MessagesToUser {
 		_, err := the.socket.WriteTo(letter.text, letter.addr)
 		if err != nil {
@@ -74,7 +86,7 @@ func (the *network) sender(MessagesToUser Messages) {
 	}
 }
 
-func (the *network) handler(MessagesFromUser, MessagesToUser Messages) {
+func (the *Network) handler(MessagesFromUser, MessagesToUser Messages) {
 
 	// slice for offline users
 	offlineUsers := make([]string, 0, 300)
@@ -107,18 +119,25 @@ func (the *network) handler(MessagesFromUser, MessagesToUser Messages) {
 	}
 }
 
-func (the *network) netStart() {
+func (the *Network) netStart(serverAddress, secret string, maxMessageSize, timeOutConnections int) {
 	fmt.Println("Server Start")
+
+	the.setServerAddr(serverAddress)
+	the.secret = secret
+	the.setMessageSize(maxMessageSize)
+	the.setTimeOutConn(timeOutConnections)
+	the.status = true
+	the.OpenSocket()
 
 	// init server
 	// sAddr := "0.0.0.0:55442" //localhost:0 192.168.0.52  // "0.0.0.0:55442" "192.168.0.52:55442"
 
-	go handler(Users, MessagesFromUsers, MessagesToUsers)
-	go sender(Conn, MessagesToUsers)
-	reader(Conn, MessagesFromUsers, Users)
+	//go handler(Users, MessagesFromUsers, MessagesToUsers)
+	//go sender(Conn, MessagesToUsers)
+	//reader(Conn, MessagesFromUsers, Users)
 }
 
-func (the *network) SetServerAddr (addr string) {
+func (the *Network) setServerAddr(addr string) {
 
 	adr, err := net.ResolveUDPAddr("udp", addr) //192.168.0.52:12345
 	if err != nil {
@@ -128,7 +147,7 @@ func (the *network) SetServerAddr (addr string) {
 	the.serverAddress = adr
 }
 
-func (the *network) OpenSocket () {
+func (the *Network) OpenSocket () {
 
 	socket, err := net.ListenUDP("udp", the.serverAddress)
 	if err != nil {
@@ -136,4 +155,39 @@ func (the *network) OpenSocket () {
 	}
 
 	the.socket = socket
+}
+
+func (the *Network) setTimeOutConn (timeOutConnections int) {
+	the.timeOutConnections = time.Duration(timeOutConnections) * time.Millisecond
+}
+
+func (the *Network) setMessageSize (maxMessageSize int) {
+	if maxMessageSize > 1456 {
+		// max size udp packet by MTU
+		maxMessageSize = 1456
+	}
+	the.maxMessageSize = maxMessageSize
+}
+
+
+
+type _ID struct {
+	sync.RWMutex
+	ID int
+}
+
+// Get () int
+// safe with Mutex
+func (the *_ID) Get() int {
+	// block for read
+	the.RLock()
+
+	// change id
+	the.ID++
+
+	// unblock
+	defer the.RUnlock()
+
+	// return result
+	return the.ID
 }

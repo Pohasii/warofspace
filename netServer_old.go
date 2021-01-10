@@ -19,7 +19,7 @@ package main
 //
 //var secret string = "qwerty"
 //
-//type network struct {
+//type Network struct {
 //	secret string
 //	maxMessageSize int
 //	timeOutConnections time.Duration
