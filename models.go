@@ -2,7 +2,6 @@ package main
 
 import (
 	"net"
-	"sync"
 	"time"
 )
 
@@ -14,13 +13,11 @@ type ServerParameters struct {
 }
 
 type Client struct {
-	ID int
 	lastActivity time.Time
-	addr string
+	addr *net.UDPAddr
 }
 
 type Network struct {
-	nextClientID       _ID
 	secret             string
 	maxMessageSize     int
 	timeOutConnections time.Duration
@@ -28,32 +25,33 @@ type Network struct {
 	clients            map[string]*Client
 	socket             *net.UDPConn
 	status             bool
-	inputMessage       chan InputMessage
-	outputMessage      chan InputMessage
+	InputMessage       chan InputMessage
+	systemMessages systemMessages
 }
 
 type InputMessage struct {
-	_ID int
-	text []byte
+	Addr string
+	Text []byte
 }
 
-type _ID struct {
-	sync.RWMutex
-	ID int
-}
-
-// Get () int
-// safe with Mutex
-func (the *_ID) Get() int {
-	// block for read
-	the.RLock()
-
-	// change id
-	the.ID++
-
-	// unblock
-	defer the.RUnlock()
-
-	// return result
-	return the.ID
-}
+type systemMessages map[string][]byte
+//type _ID struct {
+//	sync.RWMutex
+//	ID int
+//}
+//
+//// Get () int
+//// safe with Mutex
+//func (the *_ID) Get() int {
+//	// block for read
+//	the.RLock()
+//
+//	// change id
+//	the.ID++
+//
+//	// unblock
+//	defer the.RUnlock()
+//
+//	// return result
+//	return the.ID
+//}

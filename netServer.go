@@ -57,7 +57,7 @@ func (the *Network) validation(userAddr *net.UDPAddr, letter *[]byte, size *int)
 //
 func (the *Network) sender(MessagesToUser Messages) {
 	for letter := range MessagesToUser {
-		_, err := the.socket.WriteTo(letter.text, letter.addr)
+		_, err := the.socket.WriteTo(letter.Text, letter.Addr)
 		if err != nil {
 			log.Println(err)
 		}

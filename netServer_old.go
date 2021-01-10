@@ -9,8 +9,8 @@ package main
 //)
 //
 //type InputMessage struct {
-//	addr *net.UDPAddr
-//	text      []byte
+//	Addr *net.UDPAddr
+//	Text      []byte
 //}
 //
 //type Messages chan InputMessage
@@ -49,13 +49,13 @@ package main
 //	}
 //}
 //
-//func validation(verifyUser ValidUser, addr *net.UDPAddr, envelope *[]byte, size *int) {
+//func validation(verifyUser ValidUser, Addr *net.UDPAddr, envelope *[]byte, size *int) {
 //
 //	// check user in verified Users or validation secret
-//	if _, ok := verifyUser[addr.String()]; ok || secret == string((*envelope)[:6]) {
+//	if _, ok := verifyUser[Addr.String()]; ok || secret == string((*envelope)[:6]) {
 //
 //		// update time last InputMessage
-//		verifyUser[addr.String()] = time.Now()
+//		verifyUser[Addr.String()] = time.Now()
 //
 //		// del secrets byte from InputMessage
 //		*envelope = (*envelope)[6:]
@@ -70,7 +70,7 @@ package main
 ////
 //func sender(Conn *net.UDPConn, MessagesToUser Messages) {
 //	for envelope := range MessagesToUser {
-//		_, err := Conn.WriteTo(envelope.text, envelope.addr)
+//		_, err := Conn.WriteTo(envelope.Text, envelope.Addr)
 //		if err != nil {
 //			log.Println(err)
 //		}
@@ -91,12 +91,12 @@ package main
 //
 //			elapsed := time.Now().Sub(date)
 //
-//			if client != mess.addr.String() && elapsed < timeOut { //
-//				addr, err := net.ResolveUDPAddr("udp", client)
+//			if client != mess.Addr.String() && elapsed < timeOut { //
+//				Addr, err := net.ResolveUDPAddr("udp", client)
 //				if err != nil {
 //					log.Println(err)
 //				}
-//				MessagesToUser <- InputMessage{addr, mess.text}
+//				MessagesToUser <- InputMessage{Addr, mess.Text}
 //			}
 //
 //			if elapsed > timeOut {
